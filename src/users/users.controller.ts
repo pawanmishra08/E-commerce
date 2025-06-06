@@ -6,6 +6,7 @@ import { UserSignUpDto } from './dto/users.signup.dto';
 import { UserEntity } from './entities/user.entity';
 import { UserSignInDto } from './dto/users.signin.dto';
 import { instanceToPlain } from 'class-transformer';
+import { CurrentUser } from 'src/utility/common/decorators/current-user.decorator';
 
 @Controller('users')
 export class UsersController {
@@ -24,12 +25,10 @@ export class UsersController {
   {
     const user = await this.usersService.signin(userSignInDto);
     if (!user) {
-      // You can throw an exception or return a specific error response
       throw new Error('Invalid credentials');
     }
     const accesstoken = await this.usersService.accessToken(user);
     return {accesstoken, user};
-    // return {user: instanceToPlain(user)}; // Convert to plain object to avoid exposing sensitive data
   }
 
   @Post()
@@ -55,5 +54,9 @@ export class UsersController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.usersService.remove(+id);
+  }
+  @Get('me')
+  getProfile(@CurrentUser()  currentUser: UserEntity){
+    return currentUser;
   }
 }

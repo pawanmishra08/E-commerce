@@ -19,6 +19,25 @@ export class UsersService {
     private configService: ConfigService,
   ) {}
 
+    async onModuleInit() {
+    const defaultEmail = 'xyz@gmail.com';
+    const defaultPassword = '12345';
+
+    const userExists = await this.findUserByEmail(defaultEmail);
+    if (!userExists) {
+      const hashedPassword = await hash(defaultPassword, 10);
+      const defaultUser = this.usersRepository.create({
+        email: defaultEmail,
+        password: hashedPassword,
+        name: 'Default User',
+      });
+      await this.usersRepository.save(defaultUser);
+      console.log(`✅ Default user created: ${defaultEmail}`);
+    } else {
+      console.log(`ℹ️ Default user already exists: ${defaultEmail}`);
+    }
+  }
+
    async signup(usersignupDto:UserSignUpDto): Promise<UserEntity> {
     const userExists = await this.findUserByEmail(usersignupDto.email)
     if(userExists)
