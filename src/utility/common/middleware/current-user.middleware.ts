@@ -8,7 +8,7 @@ import { UsersService } from "src/users/users.service";
 declare global {
     namespace Express{
         interface Request {
-            currentUser?: UserEntity;
+            currentUser?: UserEntity | null;
         }
     }
 }
@@ -19,18 +19,24 @@ export class CurrentUserMiddleware implements NestMiddleware {
    async use(req: Request, res: Response,  next: NextFunction) {
       const authHeader = req.headers.authorization || req.headers.Authorization;
       if(!authHeader || isArray(authHeader) || !authHeader.startsWith('Bearer')) {
-          // req.currentUser = null;
+          req.currentUser = null;
           next();
+          return;
         } else {
+            try {
              const token = authHeader.split(' ')[1];
              const secret = process.env.ACCESS_TOKEN_SECRET_KEY;
              if (!secret) {
-             throw new Error("ACCESS_TOKEN_SECRET_KEY is not defined");
-          }
-           const {id} = <JWTPayload>verify(token, secret as string) as { id: string };
-           const currentUser = await this.usersService.findOne(+id);
-           req.currentUser = currentUser;
-          next();
+                 throw new Error("ACCESS_TOKEN_SECRET_KEY is not defined");
+                }
+               const {id} = <JWTPayload>verify(token, secret as string) as { id: string };
+               const currentUser = await this.usersService.findOne(+id);
+               req.currentUser = currentUser;
+                next();
+            } catch(err){
+              req.currentUser = null;
+              next();
+            }
         }
    }
 }
